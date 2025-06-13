@@ -1,0 +1,15 @@
+# 忽略 node_modules
+node_modules
+
+# 忽略產出資料夾
+dist
+build
+.vite
+
+# 忽略 log
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# 忽略環境變數
+.env
