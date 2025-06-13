@@ -87,7 +87,7 @@ export default function BadmintonAppFullScoreLimit() {
   };
 
   return (
-    <div className="p-6 space-y-6 max-w-xl mx-auto bg-green-50 rounded-xl border border-green-200 shadow">
+    <div className="px-4 py-6 space-y-6 max-w-full sm:max-w-xl mx-auto bg-green-50 rounded-xl border border-green-200 shadow overflow-hidden">
       <div className="text-sm text-muted-foreground">🎯 目前進度：Step {step}/4</div>
 
       {step === 1 && (
@@ -124,16 +124,18 @@ export default function BadmintonAppFullScoreLimit() {
 
       {step === 3 && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">🥇 3️⃣ 輸入比賽分數</h2>
+          <h2 className="text-xl sm:text-2xl font-bold">🥇 3️⃣ 輸入比賽分數</h2>
           {matches.map((m, i) => (
             <div key={i} className="space-y-2 bg-white p-4 rounded-xl border shadow-sm">
-              <div className="text-green-700 font-semibold text-base">第 {i + 1} 場</div>
-              <div className="flex items-center justify-between">
-                <div className="flex flex-col text-center flex-1">
-                  <div className="font-bold">{m.players[0][0]}</div>
-                  <div className="font-bold">{m.players[0][1]}</div>
+              <div className="text-green-700 font-semibold">第 {i + 1} 場</div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
+                {/* 左隊 */}
+                <div className="text-center">
+                  <div className="font-medium">{m.players[0][0]}</div>
+                  <div className="font-medium">{m.players[0][1]}</div>
                   <Input
-                    className="mt-1 text-center"
+                    className="mt-1 text-center w-full"
                     type="text"
                     inputMode="numeric"
                     value={m.team1Score === 0 ? '' : m.team1Score}
@@ -143,12 +145,16 @@ export default function BadmintonAppFullScoreLimit() {
                     }}
                   />
                 </div>
-                <div className="mx-4 font-extrabold text-lg text-gray-500">VS</div>
-                <div className="flex flex-col text-center flex-1">
-                  <div className="font-bold">{m.players[1][0]}</div>
-                  <div className="font-bold">{m.players[1][1]}</div>
+
+                {/* VS */}
+                <div className="text-center font-extrabold text-gray-500 text-lg">VS</div>
+
+                {/* 右隊 */}
+                <div className="text-center">
+                  <div className="font-medium">{m.players[1][0]}</div>
+                  <div className="font-medium">{m.players[1][1]}</div>
                   <Input
-                    className="mt-1 text-center"
+                    className="mt-1 text-center w-full"
                     type="text"
                     inputMode="numeric"
                     value={m.team2Score === 0 ? '' : m.team2Score}
@@ -161,7 +167,7 @@ export default function BadmintonAppFullScoreLimit() {
               </div>
             </div>
           ))}
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Button onClick={() => setStep(2)}>🔙 上一步</Button>
             <Button onClick={calculateRanking}>📊 結算排名</Button>
           </div>
