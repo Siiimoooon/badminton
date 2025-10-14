@@ -247,5 +247,5 @@ export default function BadmintonAppFullScoreLimit() {
       )}
     </div>
   );
-}
+}  
 
