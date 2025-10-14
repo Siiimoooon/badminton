@@ -20,14 +20,14 @@ const ProgressBar = ({ current, total }) => {
 export default function BadmintonAppFullScoreLimit() {
   const [step, setStep] = useState(1);
   const [playerCount, setPlayerCount] = useState(0);
-  const [selectedPlayers, setSelectedPlayers] = useState<string[]>([]);
-  const [matches, setMatches] = useState<any[]>([]);
-  const [rankings, setRankings] = useState<any[]>([]);
+  const [selectedPlayers, setSelectedPlayers] = useState([]);
+  const [matches, setMatches] = useState([]);
+  const [rankings, setRankings] = useState([]);
   const [assignmentMode, setAssignmentMode] = useState('random');
 
   const availablePlayers = ['Simon', 'Jason', '小瑞', '承訓', '威威', '下巴', '彥霖', '仲儀', '馬克'];
 
-  const fixedSchedules: Record<number, number[][]> = {
+  const fixedSchedules = {
     8: [
       [1, 5, 2, 6], [3, 7, 4, 8], [1, 7, 2, 8], [3, 5, 4, 6],
       [1, 6, 3, 8], [2, 5, 4, 7], [1, 4, 5, 8], [2, 3, 6, 7],
@@ -39,7 +39,7 @@ export default function BadmintonAppFullScoreLimit() {
     ]
   };
 
-  const handleSelectPlayer = (name: string) => {
+  const handleSelectPlayer = (name) => {
     const isSelected = selectedPlayers.includes(name);
     if (assignmentMode === 'random') {
       let next = isSelected
@@ -64,7 +64,7 @@ export default function BadmintonAppFullScoreLimit() {
     setStep(3);
   };
 
-  const handleScoreChange = (idx: number, team: number, score: number) => {
+  const handleScoreChange = (idx, team, score) => {
     const updated = [...matches];
     if (team === 1) updated[idx].team1Score = score;
     else updated[idx].team2Score = score;
@@ -72,7 +72,7 @@ export default function BadmintonAppFullScoreLimit() {
   };
 
   const calculateRanking = () => {
-    const playerStats: Record<string, { score: number; count: number }> = {};
+    const playerStats = {};
 
     for (const match of matches) {
       const [team1, team2] = match.players;
@@ -248,3 +248,4 @@ export default function BadmintonAppFullScoreLimit() {
     </div>
   );
 }
+
