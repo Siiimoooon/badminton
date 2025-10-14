@@ -55,6 +55,20 @@
                 </button>
             );
         };
+
+        // ✨ 新增進度條元件
+        const ProgressBar = ({ current, total }) => {
+            if (total === 0) return null;
+            const dots = Array.from({ length: total }, (_, i) => (
+                <div
+                    key={i}
+                    className={`w-5 h-5 rounded-full transition-colors duration-300 ${
+                        i < current ? 'bg-green-500' : 'bg-gray-300'
+                    }`}
+                ></div>
+            ));
+            return <div className="flex justify-center gap-2 my-2">{dots}</div>;
+        };
         
         // --- React 應用程式碼 ---
         function BadmintonAppFullScoreLimit() {
@@ -121,6 +135,16 @@
             setStep(4);
           };
 
+          // ✨ 新增「重新開始」功能
+          const handleRestart = () => {
+              setStep(1);
+              setPlayerCount(0);
+              setSelectedPlayers([]);
+              setMatches([]);
+              setRankings([]);
+              setAssignmentMode('random');
+          };
+
 
           return (
             <div className="px-4 py-6 space-y-6 max-w-full sm:max-w-xl mx-auto bg-green-50 rounded-xl border border-green-200 shadow-lg overflow-hidden">
@@ -143,12 +167,20 @@
                     <Button className='flex-1' variant={assignmentMode === 'random' ? 'default' : 'ghost'} onClick={() => { setAssignmentMode('random'); setSelectedPlayers([]); }}>隨機編號</Button>
                     <Button className='flex-1' variant={assignmentMode === 'ordered' ? 'default' : 'ghost'} onClick={() => { setAssignmentMode('ordered'); setSelectedPlayers([]); }}>依序編號</Button>
                   </div>
+                  
+                  {/* ✨ 進度條和更新後的文字提示 */}
+                  <div className="text-center my-2 space-y-2">
+                      <div className="text-sm text-slate-600 font-medium">✅ 已選擇 {selectedPlayers.length} / {playerCount} 位</div>
+                      <ProgressBar current={selectedPlayers.length} total={playerCount} />
+                  </div>
+
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {availablePlayers.map(name => (
                       <Button key={name} variant={selectedPlayers.includes(name) ? 'default' : 'outline'} onClick={() => handleSelectPlayer(name)} disabled={assignmentMode === 'ordered' && selectedPlayers.length >= playerCount && !selectedPlayers.includes(name)}>{name}</Button>
                     ))}
                   </div>
-                  {assignmentMode === 'ordered' ? (
+
+                  {assignmentMode === 'ordered' && (
                     <div className='space-y-2'>
                       <div className="text-sm text-slate-500">請依序點擊球員，點擊順序即為編號順序 (1, 2, 3...)。</div>
                       <div className='p-3 bg-white rounded-lg border'>
@@ -165,7 +197,8 @@
                       </div>
                       <Button variant="destructive" size="sm" onClick={() => setSelectedPlayers([])}>🗑️ 清除重選</Button>
                     </div>
-                  ) : (<div className="text-sm text-slate-500">✅ 已選擇：{selectedPlayers.length} 位 (稍後將隨機分配編號)</div>)}
+                  )}
+
                   <div className="flex gap-2">
                     <Button variant="outline" onClick={() => setStep(1)}>🔙 上一步</Button>
                     <Button disabled={selectedPlayers.length !== playerCount} onClick={generateMatches}>📋 產生賽程</Button>
@@ -220,7 +253,12 @@
                     );
                   })}
                   </div>
-                  <Button variant="outline" onClick={() => setStep(3)}>🔙 上一步：修改分數</Button>
+
+                  {/* ✨ 更新的按鈕區域 */}
+                  <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
+                    <Button variant="outline" onClick={() => setStep(3)} className="flex-1">🔙 上一步：修改分數</Button>
+                    <Button onClick={handleRestart} className="flex-1">🏸 開始新的一局</Button>
+                  </div>
                 </div>
               )}
             </div>
