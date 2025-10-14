@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 
+// --- UI/UX 優化元件 ---
+
 // ✨ 進度條元件
 const ProgressBar = ({ current, total }) => {
     if (total === 0) return null;
@@ -49,6 +51,29 @@ const MatchPreview = ({ playerCount, selectedPlayers, schedules }) => {
     );
 };
 
+// ✨ [手機優化] 帶有 +/- 按鈕的分數輸入元件
+const ScoreInput = ({ score, onScoreChange }) => {
+    const handleIncrement = () => onScoreChange(score + 1);
+    const handleDecrement = () => onScoreChange(Math.max(0, score - 1));
+
+    return (
+        <div className="flex items-center justify-center gap-2 mt-2">
+            <Button size="sm" variant="outline" className="w-10 h-10 rounded-full text-lg" onClick={handleDecrement}>-</Button>
+            <Input
+                className="text-center w-16 h-12 text-2xl font-bold border-2 focus:ring-2 focus:ring-green-500"
+                type="text"
+                inputMode="numeric"
+                value={score === 0 ? '' : score}
+                onChange={e => {
+                    const value = parseInt(e.target.value, 10);
+                    onScoreChange(isNaN(value) ? 0 : value);
+                }}
+            />
+            <Button size="sm" variant="outline" className="w-10 h-10 rounded-full text-lg" onClick={handleIncrement}>+</Button>
+        </div>
+    );
+};
+
 
 // --- 主要應用程式元件 ---
 export default function BadmintonAppFullScoreLimit() {
@@ -58,6 +83,8 @@ export default function BadmintonAppFullScoreLimit() {
   const [matches, setMatches] = useState([]);
   const [rankings, setRankings] = useState([]);
   const [assignmentMode, setAssignmentMode] = useState('random');
+  // ✨ 新增狀態來儲存挑戰賽對戰組合
+  const [playoffMatch, setPlayoffMatch] = useState(null);
 
   const availablePlayers = ['Simon', 'Jason', '小瑞', '承訓', '威威', '下巴', '彥霖', '仲儀', '馬克'];
 
@@ -146,47 +173,84 @@ export default function BadmintonAppFullScoreLimit() {
       setMatches([]);
       setRankings([]);
       setAssignmentMode('random');
+      setPlayoffMatch(null); // 重置挑戰賽
+  };
+  
+  // ✨ 新增：產生挑戰賽對戰組合
+  const generatePlayoffMatch = () => {
+    if (rankings.length < 4) return; // 確保有足夠的玩家
+
+    const bottomFour = rankings.slice(-4).map(p => p.name);
+    const shuffledPlayers = bottomFour.sort(() => Math.random() - 0.5);
+
+    const newPlayoffMatch = {
+        team1: [shuffledPlayers[0], shuffledPlayers[1]],
+        team2: [shuffledPlayers[2], shuffledPlayers[3]],
+        team1Score: 0,
+        team2Score: 0,
+    };
+
+    setPlayoffMatch(newPlayoffMatch);
+    setStep(5); // 進入新的第五步
+  };
+
+  // ✨ 新增：處理挑戰賽分數變更
+  const handlePlayoffScoreChange = (team, score) => {
+    if (!playoffMatch) return;
+    const updatedMatch = { ...playoffMatch };
+    if (team === 1) updatedMatch.team1Score = score;
+    else updatedMatch.team2Score = score;
+    setPlayoffMatch(updatedMatch);
+  };
+
+  // ✨ 優化進度提示文字
+  const progressText = {
+    1: '第 1 / 4 步：選擇人數',
+    2: '第 2 / 4 步：選擇參賽者',
+    3: '第 3 / 4 步：輸入分數',
+    4: '🏆 最終排名',
+    5: '⚔️ 最終挑戰賽'
   };
 
 
   return (
-    <div className="px-4 py-6 space-y-6 max-w-full sm:max-w-xl mx-auto bg-green-50 rounded-xl border border-green-200 shadow-lg overflow-hidden">
-      <div className="text-sm text-slate-500">🎯 目前進度：Step {step}/4</div>
+    <div className="px-4 py-6 space-y-8 max-w-full sm:max-w-xl mx-auto bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden">
+      <div className="text-sm text-slate-500 text-center font-medium">🎯 {progressText[step]}</div>
 
       {step === 1 && (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold">🏸 1️⃣ 選擇參賽人數</h2>
-          <div className="flex gap-4">
-            <Button onClick={() => { setPlayerCount(7); setStep(2); setSelectedPlayers([]); }}>7 人</Button>
-            <Button onClick={() => { setPlayerCount(8); setStep(2); setSelectedPlayers([]); }}>8 人</Button>
+        <div className="space-y-6 text-center">
+          <h2 className="text-2xl font-bold text-slate-800">🏸 選擇參賽人數</h2>
+          <div className="flex gap-4 justify-center">
+            <Button className="py-6 px-8 text-lg" onClick={() => { setPlayerCount(7); setStep(2); setSelectedPlayers([]); }}>7 人</Button>
+            <Button className="py-6 px-8 text-lg" onClick={() => { setPlayerCount(8); setStep(2); setSelectedPlayers([]); }}>8 人</Button>
           </div>
         </div>
       )}
 
       {step === 2 && (
         <div className="space-y-4">
-          <h2 className="text-2xl font-bold">🏸 2️⃣ 選擇 {playerCount} 位參賽者</h2>
-          <div className='p-1 bg-gray-200 rounded-lg flex gap-1'>
+          <h2 className="text-2xl font-bold text-slate-800 text-center">🏸 選擇 {playerCount} 位參賽者</h2>
+          <div className='p-1 bg-slate-100 rounded-lg flex gap-1 border'>
             <Button className='flex-1' variant={assignmentMode === 'random' ? 'default' : 'ghost'} onClick={() => { setAssignmentMode('random'); setSelectedPlayers([]); }}>隨機編號</Button>
             <Button className='flex-1' variant={assignmentMode === 'ordered' ? 'default' : 'ghost'} onClick={() => { setAssignmentMode('ordered'); setSelectedPlayers([]); }}>依序編號</Button>
           </div>
           
-          <div className="text-center my-2 space-y-2">
-              <div className="text-sm text-slate-600 font-medium">✅ 已選擇 {selectedPlayers.length} / {playerCount} 位</div>
+          <div className="text-center my-3 space-y-2">
+              <div className="text-base text-slate-700 font-medium">✅ 已選擇 {selectedPlayers.length} / {playerCount} 位</div>
               <ProgressBar current={selectedPlayers.length} total={playerCount} />
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {availablePlayers.map(name => {
               const playerIndex = selectedPlayers.indexOf(name);
               return (
                 <Button 
                   key={name} 
+                  className="py-3 text-base"
                   variant={playerIndex > -1 ? 'default' : 'outline'} 
                   onClick={() => handleSelectPlayer(name)} 
                   disabled={assignmentMode === 'ordered' && selectedPlayers.length >= playerCount && playerIndex === -1}
                 >
-                  {/* ✨ 在「依序編號」模式下，於按鈕上顯示代號 */}
                   {assignmentMode === 'ordered' && playerIndex > -1 ? `${playerIndex + 1}. ${name}` : name}
                 </Button>
               );
@@ -194,22 +258,9 @@ export default function BadmintonAppFullScoreLimit() {
           </div>
 
           {assignmentMode === 'ordered' && (
-            <div className='space-y-2'>
-              <div className="text-sm text-slate-500">請依序點擊球員，點擊順序即為編號順序 (1, 2, 3...)。</div>
-              <div className='p-3 bg-white rounded-lg border'>
-                <h3 className='font-semibold mb-2'>已選順序：</h3>
-                {selectedPlayers.length > 0 ? (
-                  <ol className='list-decimal list-inside space-y-1'>
-                    {selectedPlayers.map((name, index) => (
-                      <li key={index}>{name}</li>
-                    ))}
-                  </ol>
-                ) : (
-                  <div className='text-gray-500'>尚未選擇</div>
-                )}
-              </div>
+            <div className='space-y-3'>
+              <div className="text-sm text-slate-500 text-center">請依序點擊球員，點擊順序即為編號。</div>
               <Button variant="destructive" size="sm" onClick={() => setSelectedPlayers([])}>🗑️ 清除重選</Button>
-              {/* ✨ 新增對戰預覽 */}
               <MatchPreview 
                   playerCount={playerCount} 
                   selectedPlayers={selectedPlayers} 
@@ -218,82 +269,109 @@ export default function BadmintonAppFullScoreLimit() {
             </div>
           )}
 
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setStep(1)}>🔙 上一步</Button>
-            <Button disabled={selectedPlayers.length !== playerCount} onClick={generateMatches}>📋 產生賽程</Button>
+          <div className="flex gap-2 pt-4 border-t">
+            <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>🔙 上一步</Button>
+            <Button className="flex-1" disabled={selectedPlayers.length !== playerCount} onClick={generateMatches}>📋 產生賽程</Button>
           </div>
         </div>
       )}
 
       {step === 3 && (
         <div className="space-y-4">
-          <h2 className="text-xl sm:text-2xl font-bold">🥇 3️⃣ 輸入比賽分數</h2>
-          <div className="space-y-3 max-h-[60vh] overflow-y-auto pr-2">
+          <h2 className="text-2xl font-bold text-slate-800 text-center">🥇 輸入比賽分數</h2>
+          <div className="space-y-3 max-h-[65vh] overflow-y-auto p-1">
           {matches.map((m, i) => (
-            <div key={i} className="space-y-2 bg-white p-4 rounded-xl border shadow-sm">
-              <div className="text-green-700 font-semibold">第 {i + 1} 場</div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-center">
-                <div className="text-center space-y-1">
-                  <div className="font-medium">{m.players[0][0]}</div>
-                  <div className="font-medium">{m.players[0][1]}</div>
-                  <Input
-                    className="mt-1 text-center w-full"
-                    type="text"
-                    inputMode="numeric"
-                    value={m.team1Score === 0 ? '' : m.team1Score}
-                    onChange={e => {
-                      const value = parseInt(e.target.value, 10);
-                      handleScoreChange(i, 1, isNaN(value) ? 0 : value);
-                    }}
-                  />
-                </div>
-                <div className="text-center font-extrabold text-gray-500 text-lg hidden sm:block">VS</div>
-                <div className="text-center space-y-1">
-                  <div className="font-medium">{m.players[1][0]}</div>
-                  <div className="font-medium">{m.players[1][1]}</div>
-                  <Input
-                    className="mt-1 text-center w-full"
-                    type="text"
-                    inputMode="numeric"
-                    value={m.team2Score === 0 ? '' : m.team2Score}
-                    onChange={e => {
-                      const value = parseInt(e.target.value, 10);
-                      handleScoreChange(i, 2, isNaN(value) ? 0 : value);
-                    }}
-                  />
-                </div>
+            <div key={i} className="bg-white p-4 rounded-xl border-2 border-slate-100 shadow-sm">
+              <div className="text-center text-sm font-semibold text-slate-600 mb-3">第 {i + 1} 場</div>
+              <div className="flex items-start justify-around">
+                  {/* 左隊 */}
+                  <div className="flex-1 text-center space-y-1">
+                      <div className="font-semibold text-slate-800 text-lg">{m.players[0][0]}</div>
+                      <div className="font-semibold text-slate-800 text-lg">{m.players[0][1]}</div>
+                      <ScoreInput 
+                          score={m.team1Score}
+                          onScoreChange={newScore => handleScoreChange(i, 1, newScore)}
+                      />
+                  </div>
+                  {/* VS */}
+                  <div className="text-center font-bold text-slate-400 text-base mx-1 pt-5">VS</div>
+                  {/* 右隊 */}
+                  <div className="flex-1 text-center space-y-1">
+                      <div className="font-semibold text-slate-800 text-lg">{m.players[1][0]}</div>
+                      <div className="font-semibold text-slate-800 text-lg">{m.players[1][1]}</div>
+                      <ScoreInput 
+                          score={m.team2Score}
+                          onScoreChange={newScore => handleScoreChange(i, 2, newScore)}
+                      />
+                  </div>
               </div>
             </div>
           ))}
           </div>
-          <div className="flex gap-2 flex-wrap">
-            <Button variant="outline" onClick={() => setStep(2)}>🔙 上一步</Button>
-            <Button onClick={calculateRanking}>📊 結算排名</Button>
+          <div className="flex gap-2 flex-wrap pt-4 border-t">
+            <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>🔙 上一步</Button>
+            <Button className="flex-1" onClick={calculateRanking}>📊 結算排名</Button>
           </div>
         </div>
       )}
 
       {step === 4 && (
-        <div className="space-y-4">
-          <h2 className="text-2xl font-bold">🏆 最終排名</h2>
-          <p className="text-sm text-slate-500">僅計算每位選手的前五場比賽得分</p>
+        <div className="space-y-5">
+          <h2 className="text-2xl font-bold text-slate-800 text-center">🏆 最終排名</h2>
+          <p className="text-sm text-slate-500 text-center">僅計算每位選手的前五場比賽得分</p>
           <div className="space-y-2">
           {rankings.map((p, idx) => {
             const lastFour = rankings.slice(-4).map(r => r.name);
             const isBottom = lastFour.includes(p.name);
             const rankEmoji = ["🥇", "🥈", "🥉"];
             return (
-              <div key={p.name} className={`flex justify-between items-center p-3 rounded-lg text-base ${isBottom ? 'bg-red-100 border border-red-300' : 'bg-white border'}`}>
-                <span className="font-medium">{idx < 3 ? rankEmoji[idx] : <span className="inline-block w-6 text-center">{idx + 1}.</span>}{p.name}</span>
-                <span className="font-bold text-gray-800">{p.score} 分</span>
+              <div key={p.name} className={`flex justify-between items-center p-4 rounded-lg text-lg ${isBottom ? 'bg-red-100 border border-red-300' : 'bg-white border'}`}>
+                <span className="font-semibold">{idx < 3 ? rankEmoji[idx] : <span className="inline-block w-7 text-center text-slate-500">{idx + 1}.</span>}{p.name}</span>
+                <span className="font-bold text-slate-800">{p.score} 分</span>
               </div>
             );
           })}
           </div>
-          <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => setStep(3)} className="flex-1">🔙 上一步：修改分數</Button>
-            <Button onClick={handleRestart} className="flex-1">🏸 開始新的一局</Button>
+          <div className="flex flex-col sm:flex-row gap-2 pt-5 border-t">
+            <Button variant="outline" className="flex-1" onClick={() => setStep(3)}>🔙 上一步：修改分數</Button>
+            {/* ✨ 修改按鈕功能 */}
+            <Button onClick={generatePlayoffMatch} className="flex-1">⚔️ 挑戰賽分組</Button>
           </div>
+        </div>
+      )}
+
+      {/* ✨ 新增第五步：挑戰賽 */}
+      {step === 5 && playoffMatch && (
+        <div className="space-y-5">
+            <h2 className="text-2xl font-bold text-slate-800 text-center">⚔️ 最終挑戰賽</h2>
+            <div className="bg-white p-4 rounded-xl border-2 border-amber-300 shadow-lg">
+                <div className="flex items-start justify-around">
+                    {/* 左隊 */}
+                    <div className="flex-1 text-center space-y-1">
+                        <div className="font-semibold text-slate-800 text-lg">{playoffMatch.team1[0]}</div>
+                        <div className="font-semibold text-slate-800 text-lg">{playoffMatch.team1[1]}</div>
+                        <ScoreInput 
+                            score={playoffMatch.team1Score}
+                            onScoreChange={newScore => handlePlayoffScoreChange(1, newScore)}
+                        />
+                    </div>
+                    {/* VS */}
+                    <div className="text-center font-bold text-amber-500 text-base mx-1 pt-5">VS</div>
+                    {/* 右隊 */}
+                    <div className="flex-1 text-center space-y-1">
+                        <div className="font-semibold text-slate-800 text-lg">{playoffMatch.team2[0]}</div>
+                        <div className="font-semibold text-slate-800 text-lg">{playoffMatch.team2[1]}</div>
+                        <ScoreInput 
+                            score={playoffMatch.team2Score}
+                            onScoreChange={newScore => handlePlayoffScoreChange(2, newScore)}
+                        />
+                    </div>
+                </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-2 pt-5 border-t">
+                 <Button variant="outline" className="flex-1" onClick={() => setStep(4)}>🔙 返回排名</Button>
+                 <Button onClick={handleRestart} className="flex-1">🏸 開始新的一局</Button>
+            </div>
         </div>
       )}
     </div>
