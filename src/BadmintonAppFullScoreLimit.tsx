@@ -16,6 +16,40 @@ const ProgressBar = ({ current, total }) => {
     return <div className="flex justify-center gap-2 my-2">{dots}</div>;
 };
 
+// ✨ 對戰預覽元件
+const MatchPreview = ({ playerCount, selectedPlayers, schedules }) => {
+    if (playerCount === 0) return null;
+
+    const scheduleTemplate = schedules[playerCount];
+    if (!scheduleTemplate) return null;
+
+    const firstTwoMatches = scheduleTemplate.slice(0, 2);
+
+    const getPlayerName = (playerNumber) => {
+        return selectedPlayers[playerNumber - 1] || `編號 ${playerNumber}`;
+    };
+
+    return (
+        <div className='p-3 bg-blue-50 rounded-lg border border-blue-200 mt-2'>
+            <h3 className='font-semibold mb-2 text-blue-800'>前兩場對戰預覽：</h3>
+            <div className='space-y-2'>
+                {firstTwoMatches.map((match, index) => {
+                    const [p1, p2, p3, p4] = match;
+                    return (
+                        <div key={index} className='text-sm text-slate-700'>
+                            <strong>第 {index + 1} 場:</strong>
+                            <span className='ml-2'>{getPlayerName(p1)} & {getPlayerName(p2)}</span>
+                            <span className='font-bold mx-2 text-blue-600'>VS</span>
+                            <span>{getPlayerName(p3)} & {getPlayerName(p4)}</span>
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+};
+
+
 // --- 主要應用程式元件 ---
 export default function BadmintonAppFullScoreLimit() {
   const [step, setStep] = useState(1);
@@ -143,9 +177,20 @@ export default function BadmintonAppFullScoreLimit() {
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-            {availablePlayers.map(name => (
-              <Button key={name} variant={selectedPlayers.includes(name) ? 'default' : 'outline'} onClick={() => handleSelectPlayer(name)} disabled={assignmentMode === 'ordered' && selectedPlayers.length >= playerCount && !selectedPlayers.includes(name)}>{name}</Button>
-            ))}
+            {availablePlayers.map(name => {
+              const playerIndex = selectedPlayers.indexOf(name);
+              return (
+                <Button 
+                  key={name} 
+                  variant={playerIndex > -1 ? 'default' : 'outline'} 
+                  onClick={() => handleSelectPlayer(name)} 
+                  disabled={assignmentMode === 'ordered' && selectedPlayers.length >= playerCount && playerIndex === -1}
+                >
+                  {/* ✨ 在「依序編號」模式下，於按鈕上顯示代號 */}
+                  {assignmentMode === 'ordered' && playerIndex > -1 ? `${playerIndex + 1}. ${name}` : name}
+                </Button>
+              );
+            })}
           </div>
 
           {assignmentMode === 'ordered' && (
@@ -164,6 +209,12 @@ export default function BadmintonAppFullScoreLimit() {
                 )}
               </div>
               <Button variant="destructive" size="sm" onClick={() => setSelectedPlayers([])}>🗑️ 清除重選</Button>
+              {/* ✨ 新增對戰預覽 */}
+              <MatchPreview 
+                  playerCount={playerCount} 
+                  selectedPlayers={selectedPlayers} 
+                  schedules={fixedSchedules}
+              />
             </div>
           )}
 
@@ -247,5 +298,5 @@ export default function BadmintonAppFullScoreLimit() {
       )}
     </div>
   );
-}  
+}
 
